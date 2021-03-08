@@ -66,10 +66,10 @@ public class CiReport {
 	private static final String TEMPLATE_CI_REPORT_COMMAND_HELP_SECTION = "" +
 			"<details>\n" +
 			"<summary>Bot commands</summary>\n" +
-			"  The @flinkbot bot supports the following commands:\n" +
+			"  @hudi-bot supports the following commands:\n" +
 			"\n" +
-			" - `@flinkbot run travis` re-run the last Travis build\n" +
-			" - `@flinkbot run azure` re-run the last Azure build\n" +
+			" - `@hudi-bot run travis` re-run the last Travis build\n" +
+			" - `@hudi-bot run azure` re-run the last Azure build\n" +
 			"</details>";
 
 	private static final String TEMPLATE_CI_REPORT_DATA_SECTION = "" +

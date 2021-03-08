@@ -74,7 +74,7 @@ public class Core implements AutoCloseable {
 			"ci_(?<" + REGEX_GROUP_PULL_REQUEST_ID + ">[0-9]+)_(?<" + REGEX_GROUP_COMMIT_HASH + ">[0-9a-f]+)", Pattern.DOTALL);
 
 	private static final String REGEX_GROUP_COMMAND = "command";
-	private static final Pattern REGEX_PATTERN_COMMAND_MENTION = Pattern.compile("@flinkbot run (?<" + REGEX_GROUP_COMMAND + ">[\\w ]+)", Pattern.CASE_INSENSITIVE);
+	private static final Pattern REGEX_PATTERN_COMMAND_MENTION = Pattern.compile("@hudi-bot run (?<" + REGEX_GROUP_COMMAND + ">[\\w ]+)", Pattern.CASE_INSENSITIVE);
 
 	private final String observedRepository;
 	private final String ciRepository;
