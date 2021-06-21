@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -251,6 +252,10 @@ public class GithubActionsImpl implements GitHubActions {
 		final List<GithubPullRequest> pullRequests = new ArrayList<>();
 		for (GHPullRequest pullRequest : observedGitHubRepository.getPullRequests(GHIssueState.OPEN)) {
 			LOG.trace("Evaluating PR {}.", pullRequest.getNumber());
+			if (Objects.equals(pullRequest.getBase().getRef(), "asf-site")) {
+				LOG.trace("Excluded PR {} due to merging against asf-site.", pullRequest.getNumber());
+				continue;
+			}
 			if (pullRequest.getUpdatedAt().after(since)) {
 				pullRequests.add(new GithubPullRequest(pullRequest.getNumber(), pullRequest.getUpdatedAt(), pullRequest.getHead().getSha()));
 			} else {
