@@ -26,6 +26,8 @@ import java.util.stream.Stream;
 public interface GitHubActions extends AutoCloseable {
 	void submitComment(String repository, int pullRequestID, String comment) throws IOException;
 
+	void deleteComment(String repositoryName, int pullRequestID, long commentId) throws IOException;
+
 	Iterable<GitHubCheckerStatus> getCommitState(String repositoryName, String commitHash, Pattern checkerNamePattern);
 
 	Iterable<String> getBranches(String repositoryName) throws IOException;

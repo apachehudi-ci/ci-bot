@@ -96,6 +96,16 @@ public class GithubActionsImpl implements GitHubActions {
 		pullRequest.comment(comment);
 	}
 
+	@Override
+	public void deleteComment(String repositoryName, int pullRequestID, long commentId) throws IOException {
+		final GHRepository repository = gitHub.getRepository(repositoryName);
+		final GHPullRequest pullRequest = repository.getPullRequest(pullRequestID);
+		final Optional<GHIssueComment> deletingComment = pullRequest.getComments().stream().filter(c -> c.getId() == commentId).findFirst();
+		if (deletingComment.isPresent()) {
+			deletingComment.get().delete();
+		}
+	}
+
 	/**
 	 * Retrieves the CI status for the given commit.
 	 *
@@ -225,11 +235,9 @@ public class GithubActionsImpl implements GitHubActions {
 		final List<GitHubComment> comments = new ArrayList<>();
 		for (GHIssueComment listReviewComment : pullRequest.getComments()) {
 			if (listReviewComment.getUser().getLogin().equals(username)) {
-				comments.add(new GitHubComment(listReviewComment.getId(), listReviewComment.getBody(), listReviewComment::update));
+				comments.add(new GitHubComment(listReviewComment.getId(), listReviewComment.getUser().getName(), listReviewComment.getBody(), listReviewComment.getCreatedAt(), listReviewComment::update));
 			}
 		}
-		pullRequest.listReviewComments().forEach(reviewComment ->
-				comments.add(new GitHubComment(reviewComment.getId(), reviewComment.getBody(), reviewComment::update)));
 		return comments;
 	}
 
@@ -242,7 +250,7 @@ public class GithubActionsImpl implements GitHubActions {
 		for (GHIssueComment listReviewComment : pullRequest.getComments()) {
 			Matcher matcher = pattern.matcher(listReviewComment.getBody());
 			if (matcher.find() || matcher.matches()) {
-				comments.add(new GitHubComment(listReviewComment.getId(), listReviewComment.getBody(), listReviewComment::update));
+				comments.add(new GitHubComment(listReviewComment.getId(), listReviewComment.getUser().getName(), listReviewComment.getBody(), listReviewComment.getCreatedAt(), listReviewComment::update));
 			}
 		}
 		return comments.stream();

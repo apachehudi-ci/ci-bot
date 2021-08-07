@@ -20,15 +20,20 @@ package com.ververica.github;
 import com.ververica.utils.ConsumerWithException;
 
 import java.io.IOException;
+import java.util.Date;
 
 public class GitHubComment {
 	private final long id;
+	private final String commenter;
 	private final String comment;
+	private final Date createdAt;
 	private final ConsumerWithException<String, IOException> updateFunction;
 
-	public GitHubComment(long id, String comment, ConsumerWithException<String, IOException> updateFunction) {
+	public GitHubComment(long id, String commenter, String comment, Date createdAt, ConsumerWithException<String, IOException> updateFunction) {
 		this.id = id;
+		this.commenter = commenter;
 		this.comment = comment;
+		this.createdAt = createdAt;
 		this.updateFunction = updateFunction;
 	}
 
@@ -36,8 +41,16 @@ public class GitHubComment {
 		return id;
 	}
 
+	public String getCommenter() {
+		return commenter;
+	}
+
 	public String getCommentText() {
 		return comment;
+	}
+
+	public Date getCreatedAt() {
+		return createdAt;
 	}
 
 	public void update(String comment) throws IOException {

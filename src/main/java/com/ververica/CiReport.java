@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.ververica.github.GitHubCheckerStatus.State.PENDING;
+import static com.ververica.github.GitHubCheckerStatus.State.UNKNOWN;
 
 public class CiReport {
 
@@ -68,7 +69,6 @@ public class CiReport {
 			"<summary>Bot commands</summary>\n" +
 			"  @hudi-bot supports the following commands:\n" +
 			"\n" +
-			" - `@hudi-bot run travis` re-run the last Travis build\n" +
 			" - `@hudi-bot run azure` re-run the last Azure build\n" +
 			"</details>";
 
@@ -175,9 +175,9 @@ public class CiReport {
 				final CiProvider ciProvider = ciActionsLookup.getActionsForString(url).map(CiActions::getCiProvider).orElse(CiProvider.Unknown);
 
 				final GitHubCheckerStatus gitHubCheckerStatus;
-				if (state == GitHubCheckerStatus.State.UNKNOWN) {
+				if (state == UNKNOWN) {
 					gitHubCheckerStatus = new GitHubCheckerStatus(
-							GitHubCheckerStatus.State.UNKNOWN,
+							UNKNOWN,
 							"TBD",
 							CiProvider.Unknown);
 				} else {
@@ -225,7 +225,7 @@ public class CiReport {
 	}
 
 	public Stream<Build> getUnknownBuilds() {
-		return filterByStates(GitHubCheckerStatus.State.UNKNOWN);
+		return filterByStates(UNKNOWN);
 	}
 
 	public Stream<Build> getPendingBuilds() {
@@ -275,7 +275,7 @@ public class CiReport {
 						status = build.status.get().getState();
 						url = build.status.get().getDetailsUrl();
 					} else {
-						status = GitHubCheckerStatus.State.UNKNOWN;
+						status = UNKNOWN;
 						url = UNKNOWN_URL;
 					}
 					return new MetaDataEntry(build.commitHash, status, url, build.trigger.getId(), build.trigger.getType());
@@ -312,7 +312,7 @@ public class CiReport {
 					if (status.getState() == GitHubCheckerStatus.State.DELETED) {
 						return;
 					}
-					if (status.getState() != GitHubCheckerStatus.State.UNKNOWN) {
+					if (status.getState() != UNKNOWN) {
 						reportEntryBuilder.append(
 								String.format(
 										TEMPLATE_USER_DATA_BUILD_ITEM,
@@ -324,7 +324,7 @@ public class CiReport {
 			}
 
 			if (reportEntryBuilder.length() == 0) {
-				reportEntryBuilder.append(GitHubCheckerStatus.State.UNKNOWN.name());
+				reportEntryBuilder.append(UNKNOWN.name());
 			}
 
 			reportEntryPerHash.put(

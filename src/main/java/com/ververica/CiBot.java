@@ -69,6 +69,7 @@ public class CiBot implements Runnable, AutoCloseable {
 	private final GitActionsImpl gitActions;
 	private final int pollingIntervalInSeconds;
 	private final int backlogHours;
+	private final boolean postNewCommentForCIReport;
 
 	public static void main(String[] args) throws Exception {
 		final Arguments arguments = new Arguments();
@@ -122,7 +123,8 @@ public class CiBot implements Runnable, AutoCloseable {
 							arguments.checkerNamePattern),
 					gitActions,
 					arguments.pollingIntervalInSeconds,
-					arguments.backlogHours)) {
+					arguments.backlogHours,
+					arguments.postNewCommentForCIReport)) {
 				ciBot.run();
 			} catch (Exception e) {
 				LOG.error("An exception crashed CiBot. Restarting in 5 minutes.", e);
@@ -131,11 +133,12 @@ public class CiBot implements Runnable, AutoCloseable {
 		}
 	}
 
-	public CiBot(Core core, GitActionsImpl gitActions, int pollingIntervalInSeconds, int backlogHours) {
+	public CiBot(Core core, GitActionsImpl gitActions, int pollingIntervalInSeconds, int backlogHours, boolean postNewCommentForCIReport) {
 		this.core = core;
 		this.gitActions = gitActions;
 		this.pollingIntervalInSeconds = pollingIntervalInSeconds;
 		this.backlogHours = backlogHours;
+		this.postNewCommentForCIReport = postNewCommentForCIReport;
 	}
 
 	@Override
@@ -272,7 +275,7 @@ public class CiBot implements Runnable, AutoCloseable {
 		}
 
 		if (ciReport.getBuilds().count() > 0) {
-			core.updateCiReport(ciReport);
+			core.updateCiReport(ciReport, postNewCommentForCIReport);
 		}
 	}
 }

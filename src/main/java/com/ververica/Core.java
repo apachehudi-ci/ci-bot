@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +140,7 @@ public class Core implements AutoCloseable {
 		LOG.info("Shutting down.");
 	}
 
-	public void updateCiReport(final CiReport parsedCiReport) throws IOException {
+	public void updateCiReport(final CiReport parsedCiReport, boolean postNewCommentForCIReport) throws IOException {
 		final String comment = parsedCiReport.toString();
 		final long cacheKey = (long) parsedCiReport.getPullRequestID() << 32 | comment.hashCode();
 		if (pendingCiReportUpdates.getIfPresent(cacheKey) != null) {
@@ -149,10 +150,10 @@ public class Core implements AutoCloseable {
 		pendingCiReportUpdates.put(cacheKey, true);
 
 		final int pullRequestID = parsedCiReport.getPullRequestID();
-		Optional<GitHubComment> ciReport = getCiReportComment(pullRequestID);
+		Optional<GitHubComment> latestCiReportComment = getLatestCiReportComment(pullRequestID);
 
-		if (ciReport.isPresent()) {
-			GitHubComment gitHubComment = ciReport.get();
+		if (latestCiReportComment.isPresent()) {
+			GitHubComment gitHubComment = latestCiReportComment.get();
 			LOG.trace("Existing CI report:\n{}", gitHubComment.getCommentText());
 
 			LOG.trace("New CI report:\n{}", comment);
@@ -160,8 +161,15 @@ public class Core implements AutoCloseable {
 			if (gitHubComment.getCommentText().equals(comment)) {
 				LOG.debug("Skipping CI report update for pull request {} since it is up-to-date.", formatPullRequestID(pullRequestID));
 			} else {
-				LOG.info("Updating CI report for pull request {}.", formatPullRequestID(pullRequestID));
-				gitHubComment.update(comment);
+				if (postNewCommentForCIReport) {
+					LOG.info("Deleting last CI report for pull request {}.", formatPullRequestID(pullRequestID));
+					gitHubActions.deleteComment(observedRepository, pullRequestID, gitHubComment.getId());
+					LOG.info("Adding CI report for pull request {}.", formatPullRequestID(pullRequestID));
+					gitHubActions.submitComment(observedRepository, pullRequestID, comment);
+				} else {
+					LOG.info("Updating CI report for pull request {}.", formatPullRequestID(pullRequestID));
+					gitHubComment.update(comment);
+				}
 			}
 		} else {
 			LOG.info("Submitting new CI report for pull request {}.", formatPullRequestID(pullRequestID));
@@ -169,11 +177,11 @@ public class Core implements AutoCloseable {
 		}
 	}
 
-	private Optional<GitHubComment> getCiReportComment(int pullRequestID) throws IOException {
+	private Optional<GitHubComment> getLatestCiReportComment(int pullRequestID) throws IOException {
 		LOG.debug("Retrieving CI report for pull request {}.", formatPullRequestID(pullRequestID));
 		return StreamSupport.stream(gitHubActions.getComments(observedRepository, pullRequestID, username).spliterator(), false)
 				.filter(comment -> CiReport.isCiReportComment(comment.getCommentText()))
-				.findAny();
+				.max(Comparator.comparingLong(c -> c.getCreatedAt().toInstant().toEpochMilli()));
 	}
 
 	public boolean isPullRequestClosed(int pullRequestID) throws IOException {
@@ -221,7 +229,7 @@ public class Core implements AutoCloseable {
 		final String headCommitHash = pullRequest.getHeadCommitHash();
 		final Collection<String> reportedCommitHashes = new ArrayList<>();
 
-		Optional<GitHubComment> ciReportComment = getCiReportComment(pullRequestID);
+		Optional<GitHubComment> ciReportComment = getLatestCiReportComment(pullRequestID);
 		final CiReport ciReport;
 		if (ciReportComment.isPresent()) {
 			LOG.debug("CiReport comment found.");
