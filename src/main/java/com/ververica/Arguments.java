@@ -80,6 +80,13 @@ final class Arguments {
 	int backlogHours = 24;
 
 	@Parameter(
+			names = {"--newComment", "-nc"},
+			required = false,
+			description = "Set this flag to make CI report comment posted as new one every time. Otherwise, it updates the existing comment."
+	)
+	boolean postNewCommentForCIReport = false;
+
+	@Parameter(
 			names = {"--help", "-h"},
 			help = true,
 			hidden = true)

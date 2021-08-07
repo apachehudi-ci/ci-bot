@@ -139,7 +139,7 @@ public class Core implements AutoCloseable {
 		LOG.info("Shutting down.");
 	}
 
-	public void updateCiReport(final CiReport parsedCiReport) throws IOException {
+	public void updateCiReport(final CiReport parsedCiReport, boolean postNewCommentForCIReport) throws IOException {
 		final String comment = parsedCiReport.toString();
 		final long cacheKey = (long) parsedCiReport.getPullRequestID() << 32 | comment.hashCode();
 		if (pendingCiReportUpdates.getIfPresent(cacheKey) != null) {
@@ -160,8 +160,13 @@ public class Core implements AutoCloseable {
 			if (gitHubComment.getCommentText().equals(comment)) {
 				LOG.debug("Skipping CI report update for pull request {} since it is up-to-date.", formatPullRequestID(pullRequestID));
 			} else {
-				LOG.info("Updating CI report for pull request {}.", formatPullRequestID(pullRequestID));
-				gitHubComment.update(comment);
+				if (postNewCommentForCIReport) {
+					LOG.info("Adding CI report for pull request {}.", formatPullRequestID(pullRequestID));
+					gitHubActions.submitComment(observedRepository, pullRequestID, comment);
+				} else {
+					LOG.info("Updating CI report for pull request {}.", formatPullRequestID(pullRequestID));
+					gitHubComment.update(comment);
+				}
 			}
 		} else {
 			LOG.info("Submitting new CI report for pull request {}.", formatPullRequestID(pullRequestID));
