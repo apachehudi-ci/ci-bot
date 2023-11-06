@@ -29,7 +29,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHLabel;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -49,10 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GithubActionsImpl implements GitHubActions {
@@ -267,13 +264,12 @@ public class GithubActionsImpl implements GitHubActions {
 				LOG.trace("Excluded PR {} due to merging against asf-site.", pullRequest.getNumber());
 				continue;
 			}
-			final Set<String> labels = pullRequest.getLabels().stream().map(GHLabel::getName).collect(Collectors.toSet());
 			final String title = pullRequest.getTitle().toUpperCase();
-			if (labels.contains("rfc") || title.contains("[RFC-")) {
+			if (title.contains("[RFC-")) {
 				LOG.trace("Excluded PR {} due to being RFC.", pullRequest.getNumber());
 				continue;
 			}
-			if (labels.contains("pr:wip") || title.contains("[WIP]")) {
+			if (title.contains("[WIP]")) {
 				LOG.trace("Excluded PR {} due to WIP.", pullRequest.getNumber());
 				continue;
 			}
