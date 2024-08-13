@@ -220,6 +220,7 @@ public class Core implements AutoCloseable {
 				.filter(pr -> !pullRequestsToProcessByID.containsKey(pr.getID()))
 				.forEach(pr -> pullRequestsToProcessByID.put(pr.getID(), pr));
 
+		LOG.info("Number of PRs after adding recent branches: " + pullRequestsToProcessByID.size());
 		return pullRequestsToProcessByID.values().stream();
 	}
 

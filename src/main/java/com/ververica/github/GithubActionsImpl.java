@@ -33,12 +33,15 @@ import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.PagedSearchIterable;
 import org.kohsuke.github.extras.OkHttp3Connector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -256,11 +259,17 @@ public class GithubActionsImpl implements GitHubActions {
 	@Override
 	public Iterable<GithubPullRequest> getRecentlyUpdatedOpenPullRequests(String repositoryName, Date since) throws IOException {
 		final GHRepository observedGitHubRepository = gitHub.getRepository(repositoryName);
-
+		LocalDate localDate = since.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LOG.info("Search for PRs after: " + localDate.toString());
+		PagedSearchIterable<GHPullRequest> pullRequestList = observedGitHubRepository.searchPullRequests()
+				.isOpen()
+				.updatedAfter(localDate, true)
+				.list();
 		final List<GithubPullRequest> pullRequests = new ArrayList<>();
-		for (GHPullRequest pullRequest : observedGitHubRepository.getPullRequests(GHIssueState.OPEN)) {
+		for (GHPullRequest pullRequest : pullRequestList) {
 			LOG.trace("Evaluating PR {}.", pullRequest.getNumber());
-			if (Objects.equals(pullRequest.getBase().getRef(), "asf-site")) {
+			GHPullRequest pullRequestInfo = observedGitHubRepository.getPullRequest(pullRequest.getNumber());
+			if (Objects.equals(pullRequestInfo.getBase().getRef(), "asf-site")) {
 				LOG.trace("Excluded PR {} due to merging against asf-site.", pullRequest.getNumber());
 				continue;
 			}
@@ -273,13 +282,9 @@ public class GithubActionsImpl implements GitHubActions {
 				LOG.trace("Excluded PR {} due to WIP.", pullRequest.getNumber());
 				continue;
 			}
-			if (pullRequest.getUpdatedAt().after(since)) {
-				pullRequests.add(new GithubPullRequest(pullRequest.getNumber(), pullRequest.getUpdatedAt(), pullRequest.getHead().getSha()));
-			} else {
-				LOG.trace("Excluded PR {} due to not being updated recently. LastUpdatedAt={} updateCutoff={}", pullRequest.getNumber(), pullRequest.getUpdatedAt(), since);
-			}
+			pullRequests.add(new GithubPullRequest(pullRequest.getNumber(), pullRequest.getUpdatedAt(), pullRequestInfo.getHead().getSha()));
 		}
-
+		LOG.info("Number of PRs added: " + pullRequests.size());
 		return pullRequests;
 	}
 

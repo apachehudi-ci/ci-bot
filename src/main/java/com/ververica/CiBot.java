@@ -160,7 +160,7 @@ public class CiBot implements Runnable, AutoCloseable {
 	}
 
 	private Date runOnce(Date lastUpdateDate) throws Exception {
-		final Date currentUpdateDate = Date.from(Instant.now().minus(Duration.ofMinutes(10)));
+		final Date currentUpdateDate = Date.from(Instant.now().minus(Duration.ofMinutes(120)));
 		try {
 			tick(lastUpdateDate);
 		} catch (SocketTimeoutException ste) {
